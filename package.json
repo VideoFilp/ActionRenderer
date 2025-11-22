@@ -12,7 +12,15 @@
     "@remotion/renderer": "4.0.375",
     "@supabase/supabase-js": "^2.81.1",
     "dotenv": "^17.0.0",
-    "remotion": "4.0.375"
+    "remotion": "4.0.375",
+    "@remotion/bundler": "4.0.375",
+		"@remotion/cli": "4.0.375",
+		"@remotion/media-utils": "4.0.375",
+		"@remotion/paths": "4.0.375",
+		"@remotion/player": "4.0.375",
+		"@remotion/shapes": "4.0.375",
+		"@remotion/three": "4.0.375",
+		"@remotion/transitions": "4.0.375"
   },
   "devDependencies": {
     "@designcombo/types": "^5.4.2",
