@@ -54,7 +54,9 @@ jobs:
             libatk-bridge2.0-0 \
             libpango-1.0-0 \
             libcairo2 \
-            libcups2
+            libcups2  \
+            fonts-noto-cjk \
+            fonts-noto-color-emoji
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
