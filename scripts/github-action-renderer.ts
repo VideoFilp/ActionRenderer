@@ -51,6 +51,7 @@ interface EnvironmentConfig {
   cloudflareR2SecretAccessKey: string;
   cloudflareR2BucketName: string;
   cloudflareR2PublicUrl: string;
+  assertPublicUrl: string;
 }
 
 /**
@@ -65,6 +66,7 @@ function checkAndGetEnvironmentVariables(): EnvironmentConfig {
   const cloudflareR2SecretAccessKey = process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY;
   const cloudflareR2BucketName = process.env.CLOUDFLARE_R2_BUCKET_NAME;
   const cloudflareR2PublicUrl = process.env.CLOUDFLARE_R2_PUBLIC_URL;
+  const assertPublicUrl = process.env.ASSERT_PUBLIC_URL;
 
   const missingVars: string[] = [];
 
@@ -76,6 +78,7 @@ function checkAndGetEnvironmentVariables(): EnvironmentConfig {
   if (!cloudflareR2SecretAccessKey) missingVars.push("CLOUDFLARE_R2_SECRET_ACCESS_KEY");
   if (!cloudflareR2BucketName) missingVars.push("CLOUDFLARE_R2_BUCKET_NAME");
   if (!cloudflareR2PublicUrl) missingVars.push("CLOUDFLARE_R2_PUBLIC_URL");
+  if (!assertPublicUrl) missingVars.push("ASSERT_PUBLIC_URL");
 
   if (missingVars.length > 0) {
     console.error("\n❌ Error: Missing required environment variables:");
@@ -97,7 +100,51 @@ function checkAndGetEnvironmentVariables(): EnvironmentConfig {
     cloudflareR2SecretAccessKey: cloudflareR2SecretAccessKey!,
     cloudflareR2BucketName: cloudflareR2BucketName!,
     cloudflareR2PublicUrl: cloudflareR2PublicUrl!,
+    assertPublicUrl: assertPublicUrl!,
   };
+}
+
+function addPublicUrlToRelativePaths(obj: any, baseUrl: string): any {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+
+  // 如果是字符串，检查是否是相对路径
+  if (typeof obj === "string") {
+    // 如果已经是绝对URL（http://或https://开头），直接返回
+    if (obj.startsWith("http://") || obj.startsWith("https://")) {
+      return obj;
+    }
+    // 如果是以 / 开头的相对路径，或者看起来像文件路径（包含 .jpg, .png, .gif, .svg, .webp 等）
+    if (
+      obj.startsWith("/") 
+    ) {
+      // 确保 baseUrl 不以 / 结尾，路径以 / 开头
+      const cleanBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+      const cleanPath = obj.startsWith("/") ? obj : `/${obj}`;
+      return `${cleanBaseUrl}${cleanPath}`;
+    }
+    return obj;
+  }
+
+  // 如果是数组，递归处理每个元素
+  if (Array.isArray(obj)) {
+    return obj.map((item) => addPublicUrlToRelativePaths(item, baseUrl));
+  }
+
+  // 如果是对象，递归处理每个属性
+  if (typeof obj === "object") {
+    const result: any = {};
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        result[key] = addPublicUrlToRelativePaths(obj[key], baseUrl);
+      }
+    }
+    return result;
+  }
+
+  // 其他类型（数字、布尔值等）直接返回
+  return obj;
 }
 
 /**
@@ -177,7 +224,7 @@ async function render(
   const supabaseUrl = envConfig.supabaseUrl;
   const supabaseServiceKey = envConfig.supabaseServiceKey;
   const remotionBundleUrl = bundleDir || envConfig.remotionBundleUrl;
-
+  const assertPublicUrl = envConfig.assertPublicUrl;
   // 从 Supabase 获取 design 数据
   const designData = await fetchDesignFromSupabase(
     exportId,
@@ -185,9 +232,14 @@ async function render(
     supabaseServiceKey
   );
 
+  // 给designData里面相对路径的图片地址前面加上assertPublicUrl,
+  // 由于不知道那个是地址，我们只能每个字段都做深度递归检查
+
+  const processedDesignData = addPublicUrlToRelativePaths(designData, assertPublicUrl);
+
   // 准备输入数据
   const inputProps = {
-    design: designData,
+    design: processedDesignData,
     options: {
       fps: designData.fps || fps,
       width: designData.size.width || width,
@@ -421,6 +473,7 @@ if (args.includes("--help") || args.includes("-h") || args.length === 0) {
   );
   console.log("");
   console.log("Required Environment Variables:");
+  console.log("  ASSERT_PUBLIC_URL - Assert public URL");
   console.log("  PUBLIC_SUPABASE_URL - Supabase project URL");
   console.log("  SUPABASE_SERVICE_ROLE_KEY - Supabase service role key");
   console.log("  REMOTION_BUNDLE_URL - Remotion bundle URL");
