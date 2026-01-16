@@ -110,21 +110,11 @@ function addPublicUrlToRelativePaths(obj: any, baseUrl: string): any {
   }
 
   // 如果是字符串，检查是否是相对路径
-  if (typeof obj === "string") {
-    // 如果已经是绝对URL（http://或https://开头），直接返回
-    if (obj.startsWith("http://") || obj.startsWith("https://")) {
-      return obj;
-    }
-    // 如果是以 / 开头的相对路径，或者看起来像文件路径（包含 .jpg, .png, .gif, .svg, .webp 等）
-    if (
-      obj.startsWith("/") 
-    ) {
+  if (typeof obj === "string" &&  obj.startsWith("/api/media-proxy") ) {
       // 确保 baseUrl 不以 / 结尾，路径以 / 开头
       const cleanBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
       const cleanPath = obj.startsWith("/") ? obj : `/${obj}`;
       return `${cleanBaseUrl}${cleanPath}`;
-    }
-    return obj;
   }
 
   // 如果是数组，递归处理每个元素
