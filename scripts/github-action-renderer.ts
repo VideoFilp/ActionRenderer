@@ -114,7 +114,9 @@ function addPublicUrlToRelativePaths(obj: any, baseUrl: string): any {
       // 确保 baseUrl 不以 / 结尾，路径以 / 开头
       const cleanBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
       const cleanPath = obj.startsWith("/") ? obj : `/${obj}`;
-      return `${cleanBaseUrl}${cleanPath}`;
+    const url = `${cleanBaseUrl}${cleanPath}`;
+    console.log("url",url)
+      return  url;
   }
 
   // 如果是数组，递归处理每个元素
